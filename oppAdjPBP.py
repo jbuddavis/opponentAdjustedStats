@@ -73,7 +73,7 @@ def adjFunc(df, stat, category):
 #%% Configure Inputs
 # Configure API key authorization
 configuration = cfbd.Configuration()
-configuration.api_key['Authorization'] = '+txX/9qrny69W7psXOiRTZmVDPE+vObxHmJRYdo3r0lJFk3lg5UyUWFOKgCizCrT'
+configuration.api_key['Authorization'] = 'YOUR API KEY HERE'
 configuration.api_key_prefix['Authorization'] = 'Bearer'
 
 # Choose what year you would like to perform adjustment on
