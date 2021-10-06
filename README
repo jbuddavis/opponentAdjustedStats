@@ -1,0 +1,25 @@
+Bud Davis CFB Opponent Adjusted Stats
+@jbuddavis
+
+If you find this method useful or use it often, please cite my code
+
+Overview:
+- Adjustment on PBP-level Data
+  - Not garbage time filtered
+- Method of adjustment is Ridge Regression
+  - Method inspired from
+    - https://medium.com/analyzing-ncaa-college-basketball-with-gcp/fitting-it-in-adjusting-team-metrics-for-schedule-strength-4e8239be0530
+    - https://colab.research.google.com/drive/13L4b36cTrnC55ahD6dVf4-r9pzkYV-j5
+- Joint adjustment for
+  - Homefield advantage
+  - Offense quality
+  - Defense quality
+  
+More Details:
+- Function: epa = intercept + offense_team + defense_team + homefield advantage
+- Every team gets offense and defense dummy variables
+- Homefield advantage also gets a dummy variable
+- Ridge solves for the value of these dummy variables jointly in one go (no iterative averaging)
+- Ridge over general linear model since, Ridge has a penalty term to avoid overfitting 
+- We solve for this penalty term via cross validation of the season data to date
+- Ridge is better than Lasso since we explicitly want a value for every dummy variable
