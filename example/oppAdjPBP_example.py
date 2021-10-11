@@ -20,7 +20,7 @@ year = 2019 # year of interest
 
 # Configure API key authorization
 configuration = cfbd.Configuration()
-configuration.api_key['Authorization'] = '+txX/9qrny69W7psXOiRTZmVDPE+vObxHmJRYdo3r0lJFk3lg5UyUWFOKgCizCrT'
+configuration.api_key['Authorization'] = 'YOUR_API_KEY_HERE'
 configuration.api_key_prefix['Authorization'] = 'Bearer'
 
 # create empty dataframes to be filled
