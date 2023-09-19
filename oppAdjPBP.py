@@ -7,6 +7,15 @@ from sklearn import linear_model
 start = time.time()
 pd.options.mode.chained_assignment = None
 
+#%% Configure Inputs
+# Configure API key authorization
+configuration = cfbd.Configuration()
+configuration.api_key['Authorization'] = 'YOUR KEY HERE'
+configuration.api_key_prefix['Authorization'] = 'Bearer'
+
+# Choose what year you would like to perform adjustment on
+year = 2023 # year of interest
+
 ### --------------------------------------------------------------------------
 ### PART 1 - Opponent Adjustment Function
 ### --------------------------------------------------------------------------
@@ -19,13 +28,13 @@ def adjFunc(df, stat, category):
     dfDummies = pd.get_dummies(df[[offStr, hfaStr, defStr]])
     
     # Hyperparameter tuning for alpha (aka lambda, ie the penalty term) 
-    # for full season data, the alpha will be 100-125, for smaller sample sizes it may find a higher alpha
-    rdcv = linear_model.RidgeCV(alphas = [75,100,125,150,175,200,225,250,275], fit_intercept = True)
+    # for full season PBP data, the alpha will be 150-200, for smaller sample sizes it may find a higher alpha
+    rdcv = linear_model.RidgeCV(alphas = [75,100,125,150,175,200,225,250,275,300,325], fit_intercept = True)
     rdcv.fit(dfDummies,df[stat]);
     alf = rdcv.alpha_
     
     # Or set Alpha directly here
-    # alf = 125
+    # alf = 175
     
     # Set up ridge regression model parameters
     reg = linear_model.Ridge(alpha = alf, fit_intercept = True)  
@@ -70,15 +79,6 @@ def adjFunc(df, stat, category):
 ### --------------------------------------------------------------------------
 ### PART 2 - Data Import & Formatting
 ### --------------------------------------------------------------------------
-#%% Configure Inputs
-# Configure API key authorization
-configuration = cfbd.Configuration()
-configuration.api_key['Authorization'] = 'YOUR API KEY HERE'
-configuration.api_key_prefix['Authorization'] = 'Bearer'
-
-# Choose what year you would like to perform adjustment on
-year = 2021 # year of interest
-
 #%% Ping the API
 # create empty dataframes to be filled
 dfCal = pd.DataFrame() # dataframe for calendar
@@ -108,16 +108,23 @@ for i in range (0,len(dfCal)):
     dfGameWk = pd.DataFrame().from_records([g.to_dict()for g in api_response])
     dfGame = dfGame.append(dfGameWk)
     print('PBP data downloaded for '+season_type+' week',week)
-dfPBP.reset_index(inplace=True,drop=True)
-dfGame.reset_index(inplace=True,drop=True)   
 
 # Get FBS teams
 api_instance = cfbd.TeamsApi(cfbd.ApiClient(configuration))
 api_response = api_instance.get_fbs_teams(year=year) 
 dfTeam = pd.DataFrame().from_records([g.to_dict()for g in api_response])
+dfTeam.to_csv('cfbd_team.csv',index=False) #print FBS teams to csv for record keeping
 dfTeam = dfTeam[['school']]
-dfTeam.to_csv('teams.csv',index=False) #print FBS teams to csv for record keeping
+
+# Drop non-"fbs-vs-fbs" games
+dfPBP = dfPBP[dfPBP['home'].isin(dfTeam.school.to_list())]
+dfPBP = dfPBP[dfPBP['away'].isin(dfTeam.school.to_list())]
+dfGame = dfGame[dfGame['home_team'].isin(dfTeam.school.to_list())]
+dfGame = dfGame[dfGame['away_team'].isin(dfTeam.school.to_list())]
 dfGame.to_csv('games'+str(year)+'.csv', index=False) # print game data to csv for record keeping
+
+dfPBP.reset_index(inplace=True,drop=True)
+dfGame.reset_index(inplace=True,drop=True)   
 
 #%% Format PBP data
 print('Formatting data...')
@@ -179,7 +186,8 @@ print('Data formatted')
 #%% Call the opponent adjustment on our dataframes of interest
 # if you just need to tweek the opp-adj func, to save time, after the first 
 # round of pbp downloading, comment out lines ~85-167 and read in the pbp csvs here
-dfTeam = pd.read_csv('teams.csv')
+dfTeam = pd.read_csv('cfbd_team.csv')
+dfTeam = dfTeam[['school']]
 dfAll = pd.read_csv('allPBP'+str(year)+'.csv')
 dfPass = pd.read_csv('passPBP'+str(year)+'.csv')
 dfRush = pd.read_csv('rushPBP'+str(year)+'.csv')
